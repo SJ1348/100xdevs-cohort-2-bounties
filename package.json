@@ -11,6 +11,7 @@
     "react-scripts": "5.0.1",
     "video.js": "^8.6.1",
     "videojs-contrib-eme": "^3.11.1",
+    "videojs-sprite-thumbnails": "^2.1.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

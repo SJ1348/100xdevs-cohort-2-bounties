@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.11.7/video-js.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.11.7/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-eme@3.8.0/dist/videojs-contrib-eme.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-sprite-thumbnails@1.1.0/dist/videojs-sprite-thumbnails.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/spritesheet-js@1.2.4/dist/spritesheet.min.js"></script>
+
+    <!-- <style>
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      .segment {
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+
+      .vjs-time-tooltip {
+        word-break: keep-all;
+        white-space: nowrap;
+      }
+
+      .vjs-progress-segments {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        z-index: 10;
+      }
+
+      .vjs-progress-segment {
+        border-right: 1px solid;
+        border-left: 1px solid;
+        position: absolute;
+        z-index: 10;
+        height: 100%;
+        top: 0;
+        transition: all 0.2s;
+      }
+
+      .vjs-progress-segment:hover {
+        height: 300% !important;
+        top: -100%;
+        background-color: rgb(250, 250, 250, 0.4);
+      }
+    </style> -->
+    <style>
+      .vjs-time-tooltip {
+        display: flex;
+        direction: column;
+      }
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      .segment {
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+      .vjs-time-tooltip {
+        word-break: keep-all;
+        white-space: nowrap;
+      }
+      .vjs-progress-segments {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        z-index: 10;
+      }
+      .vjs-progress-segment {
+        border-right: 1px solid;
+        border-left: 1px solid;
+        position: absolute;
+        z-index: 10;
+        height: 100%;
+        top: 0;
+        transition: all 0.2s;
+      }
+      .vjs-progress-segment:hover {
+        height: 300% !important;
+        top: -100%;
+        background-color: rgb(250, 250, 250, 0.4);
+      }
+      .button-section {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        cursor: pointer;
+      }
+      .button-section:hover {
+        background-color: #e6e6ff;
+      }
+      .vjs-progress-holder.vjs-slider.vjs-slider-horizontal {
+        height: 10px;
+        z-index: 2;
+      }
+      .video-js .vjs-progress-control:hover .vjs-mouse-display {
+        display: block;
+      }
+      .vjs-seek-button-marker {
+        position: absolute;
+        height: 10px;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        background-color: transparant;
+        border-left: solid rgba(0, 0, 0, 0.322);
+        z-index: 0;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .vjs-seek-button-marker:hover {
+        background-color: #e6e6ff;
+      }
+      .vjs-seek-button-marker .vjs-seek-button-section-text {
+        position: absolute;
+        width: max-content;
+        padding: 4px;
+        border-radius: 10%;
+        top: 30px;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: black;
+        color: #fff;
+        font-size: 11px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .vjs-seek-button-marker:hover .vjs-seek-button-section-text {
+        opacity: 1;
+      }
+    </style>
+    <title>Test VideJS DRM</title>
+  </head>
+
+  <body>
+    <div>
+      <div style="width: 100%">
+        <video id="my-video" class="video-js"></video>
+      </div>
+      <div id="segments"></div>
+    </div>
+
+    <script>
+      const segmentsContainer = document.getElementById("segments");
+
+      const segments = [
+        {
+          startTime: 0,
+          endTime: 5,
+          name: "Segment-1",
+        },
+        {
+          startTime: 5,
+          endTime: 12,
+          name: "Segment-2",
+        },
+        {
+          startTime: 12,
+          endTime: 20,
+          name: "Segment-3",
+        },
+        {
+          startTime: 20,
+          endTime: 32,
+          name: "Segment-4",
+        },
+        {
+          startTime: 32,
+          endTime: 40,
+          name: "Segment-5",
+        },
+      ]; // shape {startTime:number (sec), endTime:number(sec), name:string}
+
+      let player = null; // global player object
+
+      const getThumbnail = (currentTime) => {};
+
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+
+        const formattedMinutes = String(minutes).padStart(2, "0");
+        const formattedSeconds = String(remainingSeconds).padStart(2, "0");
+
+        return `${formattedMinutes}:${formattedSeconds}`;
+      }
+
+      // render segments and their time stamps in view
+      const showSegmentsInView = () => {
+        for (const segment of segments) {
+          const div = document.createElement("div");
+          const heading = document.createElement("p");
+          const p = document.createElement("p");
+
+          p.innerText = `${formatTime(segment.startTime)} - ${formatTime(
+            segment.endTime
+          )}`;
+          heading.innerText = `${segment.name}`;
+
+          div.classList.add("segment");
+          div.append(heading, p);
+
+          //   <div class="segmaent">
+          //     <p>Segment-1</p>
+          //     <p>0:0 - 0:50</p>
+          //   </div>;
+
+          // click handler
+
+          div.addEventListener("click", () =>
+            scrollToSegment(segment.startTime)
+          );
+
+          segmentsContainer.appendChild(div);
+        }
+      };
+
+      // handle player ready
+      const handlePlayerReady = () => {
+        showSegmentsInView();
+      };
+
+      // initialize player
+      const initPlayer = () => {
+        player.eme();
+        player.src({
+          // src: "https://cdn.bitmovin.com/content/assets/art-of-motion_drm/mpds/11331.mpd",
+          // type: "application/dash+xml",
+          src: "//vjs.zencdn.net/v/oceans.mp4",
+          type: "video/mp4",
+          keySystems: {
+            "com.widevine.alpha":
+              "https://cwip-shaka-proxy.appspot.com/no_auth",
+          },
+        });
+        player.spriteThumbnails({
+          url: "https://raw.githubusercontent.com/GiriAakula/samuel-miller-task/master/openvideo.png",
+          width: 160,
+          height: 90,
+        });
+      };
+
+      player = videojs(
+        "my-video",
+        {
+          controls: true,
+          fluid: true,
+          html5: {
+            vhs: {
+              overrideNative: true,
+            },
+          },
+        },
+        function () {
+          initPlayer();
+          player.ready(handlePlayerReady);
+        }
+      );
+
+      //  on clicking on the segment scroll to the start of that segment
+      const scrollToSegment = (time) => {
+        player.currentTime(time);
+      };
+
+      player.on("loadedmetadata", function () {
+        // Add sections to the seekbar
+        segments.forEach(function (section) {
+          addSectionToSeekBar(section);
+        });
+      });
+
+      function addSectionToSeekBar(section) {
+        var seekBar = player.controlBar.progressControl.seekBar.el();
+        var sectionMarker = document.createElement("div");
+        sectionMarker.className = "vjs-seek-button-marker";
+        sectionMarker.style.left =
+          (section.startTime / player.duration()) * 100 + "%";
+        sectionMarker.style.width =
+          ((section.endTime - section.startTime) / player.duration()) * 100 +
+          "%";
+        var textElement = document.createElement("div");
+        textElement.className = "vjs-seek-button-section-text";
+        textElement.textContent = section.name;
+        sectionMarker.appendChild(textElement);
+        seekBar.appendChild(sectionMarker);
+      }
+    </script>
+  </body>
+</html>

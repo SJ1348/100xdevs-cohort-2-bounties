@@ -4,8 +4,14 @@ import "videojs-contrib-eme";
 import "video.js/dist/video-js.css";
 import "videojs-sprite-thumbnails";
 
-// shape {startTime:number (sec), endTime:number (sec), name:string}
-const segments = [
+// Shape {startTime: number (sec), endTime: number (sec), name: string}
+interface Segment {
+  start: number;
+  end: number;
+  text: string;
+}
+
+const segments: Segment[] = [
   {
     start: 0,
     end: 6,
@@ -32,55 +38,63 @@ const segments = [
     text: "Segment-5",
   },
 ];
-function formatTime(seconds) {
+
+function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   const formattedMinutes = String(minutes).padStart(2, "0");
   const formattedSeconds = String(remainingSeconds).padStart(2, "0");
   return `${formattedMinutes}:${formattedSeconds}`;
 }
-//  on clicking on the segment scroll to the start of that segment
-const scrollToSegment = (time, player) => {
+
+const scrollToSegment = (time: number, player: any) => {
   player.currentTime(time);
 };
-// render segments and their time stamps in view
-const showSegmentsInView = (player, segmentsContainer) => {
+
+const showSegmentsInView = (
+  player: any,
+  segmentsContainer: HTMLElement | null
+) => {
+  if (!segmentsContainer) return;
+
   for (const segment of segments) {
     const div = document.createElement("div");
     const heading = document.createElement("p");
     const p = document.createElement("p");
+
     p.innerText = `${formatTime(segment.start)} - ${formatTime(segment.end)}`;
     heading.innerText = `${segment.text}`;
     div.classList.add("segment");
     div.append(heading, p);
-    // click handler
+
     div.addEventListener("click", () => scrollToSegment(segment.start, player));
     segmentsContainer.appendChild(div);
   }
 };
-//Cmponent starts here
-const CustomVideoPlayer = () => {
-  const videoRef = useRef(null);
-  const playerRef = useRef(null);
-  const initPlayer = (player) => {
-    player.eme();
-    player.src({
-      // src: "https://cdn.bitmovin.com/content/assets/art-of-motion_drm/mpds/11331.mpd",
-      // type: "application/dash+xml",
-      src: "//vjs.zencdn.net/v/oceans.mp4",
-      type: "video/mp4",
-      keySystems: {
-        "com.widevine.alpha": "https://cwip-shaka-proxy.appspot.com/no_auth",
-      },
-    });
-    player.spriteThumbnails({
-      url: "https://raw.githubusercontent.com/GiriAakula/samuel-miller-task/master/openvideo.png",
-      width: 160,
-      height: 90,
-    });
-  };
-  //For initializing the video
+
+const CustomVideoPlayerTS: React.FC = () => {
+  const videoRef = useRef<any | null>(null);
+  const playerRef = useRef<any | null>(null);
+
   useEffect(() => {
+    const initPlayer = (player: any) => {
+      player.eme();
+      player.src({
+        // src: "https://cdn.bitmovin.com/content/assets/art-of-motion_drm/mpds/11331.mpd",
+        // type: "application/dash+xml",
+        src: "//vjs.zencdn.net/v/oceans.mp4",
+        type: "video/mp4",
+        keySystems: {
+          "com.widevine.alpha": "https://cwip-shaka-proxy.appspot.com/no_auth",
+        },
+      });
+      player.spriteThumbnails({
+        url: "https://raw.githubusercontent.com/GiriAakula/samuel-miller-task/master/openvideo.png",
+        width: 160,
+        height: 90,
+      });
+    };
+
     const options = {
       controls: true,
       fluid: true,
@@ -90,22 +104,27 @@ const CustomVideoPlayer = () => {
         },
       },
     };
+
     if (!playerRef.current) {
       // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
       const videoElement = document.createElement("video-js");
       videoElement.classList.add("vjs-big-play-centered");
       videoRef.current.appendChild(videoElement);
-      const player = (playerRef.current = videojs(videoElement, options, () => {
-        initPlayer(playerRef.current);
-      }));
+      const player: any = (playerRef.current = videojs(
+        videoElement,
+        options,
+        () => {
+          initPlayer(playerRef.current);
+        }
+      ));
       //for chapters
       const segmentsContainer = document.getElementById("segments");
       showSegmentsInView(player, segmentsContainer);
 
       //for segments on seekbar
-      const addSectionToSeekBar = (section) => {
+      const addSectionToSeekBar = (section: Segment) => {
         var seekBar = player.controlBar.progressControl.seekBar.el();
-        const timeTooltip = player
+        const timeTooltip: any = player
           .getChild("controlBar")
           .getChild("progressControl")
           .getChild("seekBar")
@@ -136,6 +155,7 @@ const CustomVideoPlayer = () => {
       });
     }
   }, [videoRef]);
+
   return (
     <>
       <style>
@@ -235,4 +255,5 @@ const CustomVideoPlayer = () => {
     </>
   );
 };
-export default CustomVideoPlayer;
+
+export default CustomVideoPlayerTS;
